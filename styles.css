@@ -666,12 +666,81 @@ input::-webkit-inner-spin-button { margin-left: 4px; }
 
 .sheet-sign span { flex: 1; border-top: 1px solid #000; padding-top: 4px; }
 
+/* ---------- the 4½ × 8 stack card (screen: hidden) ---------- */
+.printcard { display: none; }
+
 @media print {
-  @page { size: letter portrait; margin: 12mm; }
+  @page { size: letter portrait; margin: 10mm; }
 
   html, body { background: #fff !important; color: #000 !important; }
 
   .shell { max-width: none; margin: 0; padding: 0; }
   .hero, .layout, .foot { display: none !important; }
-  .sheet { display: block !important; }
+
+  /* one page: sections run in two columns so the sheet never spills to a
+   * second sheet; the header, figure and sign-off span the full width */
+  .sheet {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 7mm;
+    row-gap: 3.5mm;
+    align-content: start;
+  }
+  .sheet-head, .sheet-fig, .sheet-sign, .sheet-empty { grid-column: 1 / -1; }
+  .sheet-head h1 { font-size: 17pt; }
+  .sheet-big b { font-size: 21pt; }
+  .sheet-sec { margin-top: 0; }
+  .sheet-sec h2 { margin: 0 0 3px; font-size: 8.4pt; }
+  .sheet-table { font-size: 7.8pt; }
+  .sheet-table th, .sheet-table td { padding: 2px 4px; }
+  .sheet-note { font-size: 7.6pt; line-height: 1.35; }
+  .sheet-dims thead th, .sheet-dims .dim-role { font-size: 7pt; }
+  .sheet-fig { margin-top: 0; }
+  .sheet-fig svg { max-height: 135px; }
+  .sheet-sign { margin-top: 0; }
+
+  body.print-card .sheet { display: none !important; }
+  body.print-card .printcard {
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    color: #000;
+    font-size: 12pt;
+    line-height: 1.35;
+  }
+  .printcard .pc-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 4mm;
+    border-bottom: 1.5pt solid #000;
+    padding-bottom: 2.5mm;
+    font-size: 8.5pt;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+  .printcard .pc-hero { display: flex; align-items: baseline; gap: 4mm; margin: 4mm 0 2mm; }
+  .printcard .pc-hero b { font-size: 54pt; line-height: 1; }
+  .printcard .pc-hero span { font-size: 12.5pt; letter-spacing: 0.06em; text-transform: uppercase; }
+  .printcard .pc-line { margin: 2mm 0; font-size: 13pt; font-weight: 600; }
+  .printcard .pc-grade, .printcard .pc-last { font-weight: 500; }
+  /* one fact per line, running down the card, so the stack reads top to bottom */
+  .printcard .pc-grid {
+    margin: 4mm 0;
+    border-top: 1pt solid #000;
+    border-bottom: 1pt solid #000;
+    padding: 1mm 0;
+  }
+  .printcard .pc-grid div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4mm;
+    padding: 1.4mm 0;
+    border-bottom: 0.4pt solid #999;
+  }
+  .printcard .pc-grid div:last-child { border-bottom: 0; }
+  .printcard .pc-grid span { font-size: 10.5pt; letter-spacing: 0.04em; text-transform: uppercase; }
+  .printcard .pc-grid b { font-size: 15.5pt; text-align: right; }
+  .printcard .pc-sign { margin-top: 10mm; font-size: 9.5pt; }
 }

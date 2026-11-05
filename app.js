@@ -5,7 +5,8 @@
  *
  * Parts ship loose: the cardboard is scrapped, so only part size, part
  * weight and piece count drive the plan. Fixed shop constraints:
- * 44 × 40 in pallet, 26 in total height, 2,700 lb total load (pallet
+ * 44 × 48 in pallet (44 front-to-back, 48 across), 4 3/4 in thick,
+ * 26 in total height, 2,700 lb total load (pallet
  * included), sides flush, a little overhang allowed at the back only.
  *
  * Canonical internal units are cm and kg; the UI reads and writes
@@ -19,6 +20,7 @@ const MATERIALS = [
   { id: 'A105', desc: 'Carbon steel · forged', rho: 7.85 },
   { id: 'A130', desc: 'Carbon steel', rho: 7.85 },
   { id: 'A185', desc: 'Carbon steel', rho: 7.85 },
+  { id: 'A350', desc: 'A350 LF2 · carbon steel', rho: 7.85 },
   { id: 'F304-304L', desc: 'Stainless · forged, dual-certified 304/304L', rho: 7.93 },
   { id: 'F316-316L', desc: 'Stainless · forged, dual-certified 316/316L', rho: 8.0 },
   { id: 'F22', desc: 'Alloy steel · 2¼Cr-1Mo', rho: 7.85 },
@@ -67,7 +69,7 @@ const DEFAULTS = {
  * types them and they are not on screen. They still print on the plan sheet,
  * and the 26 in / 2,700 lb are totals including the pallet. */
 const PALLET = {
-  palletL: IN(44), palletW: IN(40), palletH: IN(5.5), palletTare: LB(55),
+  palletL: IN(44), palletW: IN(48), palletH: IN(4.75), palletTare: LB(55),
   maxHeight: IN(26), maxLoad: LB(2700), backOverhang: IN(1)
 };
 
@@ -206,25 +208,7 @@ const usableLength = (s) => s.palletL + s.backOverhang;
 
 /* --------------------------- packing ----------------------------- */
 
-/** Hex / staggered rows of circles touching each other. */
-function hexRows(L, W, od) {
-  const gapY = od * Math.sqrt(3) / 2;
-  const rowData = [];
-  const maxI = Math.floor((W - od) / gapY + 1e-9);
-  for (let i = 0; i <= maxI; i++) {
-    const offset = (i % 2) * od / 2;
-    const n = Math.floor((L - od - offset) / od + 1e-9) + 1;
-    if (n > 0) rowData.push({ offset, n, y: od / 2 + i * gapY });
-  }
-  return {
-    stagger: true,
-    rows: rowData.length,
-    rowData,
-    gapY,
-    count: rowData.reduce((sum, row) => sum + row.n, 0)
-  };
-}
-
+/** Straight rows, every row the same count, so rows are easy to count. */
 function squareGrid(L, W, od) {
   const cols = Math.max(0, Math.floor(L / od));
   const rows = Math.max(0, Math.floor(W / od));
@@ -233,31 +217,21 @@ function squareGrid(L, W, od) {
 
 function centersFor(layout, od) {
   const pts = [];
-  if (layout.stagger) {
-    for (const row of layout.rowData) {
-      for (let j = 0; j < row.n; j++) {
-        pts.push([od / 2 + row.offset + j * od, row.y]);
-      }
-    }
-  } else {
-    for (let i = 0; i < layout.rows; i++) {
-      for (let j = 0; j < layout.cols; j++) {
-        pts.push([od / 2 + j * od, od / 2 + i * od]);
-      }
+  for (let i = 0; i < layout.rows; i++) {
+    for (let j = 0; j < layout.cols; j++) {
+      pts.push([od / 2 + j * od, od / 2 + i * od]);
     }
   }
   return pts;
 }
 
-/** Best circle packing, grid or staggered, both ways round. */
+/** Lined-up rows, both ways round; whichever orientation holds more wins. */
 function roundLayout(palletL, palletW, od) {
   const options = [];
   for (const swapped of [false, true]) {
     const L = swapped ? palletW : palletL;
     const W = swapped ? palletL : palletW;
-    for (const base of [squareGrid(L, W, od), hexRows(L, W, od)]) {
-      options.push({ ...base, swapped, L, W });
-    }
+    options.push({ ...squareGrid(L, W, od), swapped, L, W });
   }
   options.sort((a, b) => b.count - a.count);
   const best = options[0];
@@ -619,22 +593,6 @@ function render() {
       `${lenUnit()} pallet.`,
       'bad'
     ));
-  } else if (layout.stagger) {
-    const counts = layout.rowData.map((row) => row.n);
-    const uniform = counts.every((n) => n === counts[0]);
-    let rowText;
-    if (uniform) {
-      rowText = `<b>${layout.rows} staggered rows of ${counts[0]}</b>`;
-    } else if (layout.rows <= 8) {
-      rowText = `<b>${layout.rows} staggered rows</b> (${counts.join(', ')})`;
-    } else {
-      rowText = `<b>${layout.rows} staggered rows</b> of ${Math.min(...counts)}–${Math.max(...counts)}`;
-    }
-    out.push(note(
-      `Packing: ${rowText} → <b>${nf0.format(r.perLayer)} pcs</b> per layer on the ` +
-      `${fmtDim(s.palletL)} × ${fmtDim(s.palletW)} ${lenUnit()} pallet` +
-      `${layout.swapped ? ' (turned across the pallet)' : ''} — ${overhangNote(s)}.`
-    ));
   } else {
     out.push(note(
       `Packing: <b>${layout.cols} × ${layout.rows} grid</b> → <b>${nf0.format(r.perLayer)} pcs</b> per layer ` +
@@ -719,6 +677,8 @@ function stripTags(html) {
     .trim();
 }
 
+const MAX_BREAKDOWN_ROWS = 14;
+
 /* Cards carry different letter sets, so the sheet shows the letters this
  * part actually has. Nothing filled in yet prints the full card blank. */
 function printedDimRows(s) {
@@ -745,6 +705,7 @@ function renderSheet(s, r) {
         </div>
       </header>
       <p class="sheet-empty">${stripTags($('banner').textContent)} — enter the part size, piece count and pallet limits, then print again.</p>`;
+    $('printCard').innerHTML = '';
     return;
   }
 
@@ -755,7 +716,9 @@ function renderSheet(s, r) {
   const specRows = printedDimRows(s);
   const shapeName = s.partShape === 'ring' ? 'ring / flange' : 'disc / blank';
 
-  const rows = r.perPallet.map((p, i) => `<tr>
+  /* The sheet is one page: past 14 pallets the rest are summed in a line. */
+  const shown = r.perPallet.slice(0, MAX_BREAKDOWN_ROWS);
+  const rows = shown.map((p, i) => `<tr>
       <td>${i + 1}</td>
       <td>${nf0.format(p.units)}</td>
       <td>${nf0.format(p.layers)}</td>
@@ -764,8 +727,8 @@ function renderSheet(s, r) {
       <td>${fmtDim(p.height)}</td>
     </tr>`).join('');
 
-  const more = r.pallets > r.perPallet.length
-    ? `<p class="sheet-note">… plus ${nf0.format(r.pallets - r.perPallet.length)} more pallets of ${nf0.format(r.capacity)} pcs each.</p>`
+  const more = r.pallets > shown.length
+    ? `<p class="sheet-note">… plus ${nf0.format(r.pallets - shown.length)} more pallets of ${nf0.format(r.capacity)} pcs each.</p>`
     : '';
 
   sheet.innerHTML = `
@@ -848,6 +811,49 @@ function renderSheet(s, r) {
     <div class="sheet-fig">${planPreview(s, r)}</div>
 
     <p class="sheet-sign"><span>Stacked and checked by</span><span>Date</span></p>`;
+
+  $('printCard').innerHTML = cardMarkup(s, r);
+}
+
+/* The 4½ × 8 card: what to build, how many, and the weight. No packing notes,
+ * no figure, no breakdown — just the numbers someone needs at the stack. */
+function cardMarkup(s, r) {
+  const mat = materialOf(s.material);
+  const unitL = lenUnit();
+  const unitW = wtUnit();
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const last = r.perPallet[r.perPallet.length - 1];
+  const partLoad = last && last.units < r.unitsOnFull
+    ? `<div><span>Last pallet</span><b>${nf0.format(last.units)} pcs · ${nf0.format(last.layers)} layers</b></div>`
+    : '';
+
+  return `
+    <div class="pc-top"><span>Pallet card</span><span>${today}</span></div>
+    <div class="pc-hero"><b>${nf0.format(r.pallets)}</b><span>pallets · ${mat.id}</span></div>
+    <p class="pc-line">${fmtDim(s.rOD)} ${unitL} OD${r.bore > 0 ? ` × ${fmtDim(r.bore)} ${unitL} bore` : ''} × ${fmtDim(s.rThick)} ${unitL}</p>
+    <p class="pc-line pc-grade">${s.partShape === 'ring' ? 'Ring / flange' : 'Disc / blank'} · ${nf0.format(r.qty)} pcs</p>
+    <div class="pc-grid">
+      <div><span>Rows per layer</span><b>${nf0.format(r.layout.rows)}</b></div>
+      <div><span>Parts per row</span><b>${nf0.format(r.layout.cols)}</b></div>
+      <div><span>Parts per layer</span><b>${nf0.format(r.perLayer)}</b></div>
+      <div><span>Layers per pallet</span><b>${nf0.format(r.layersOnFull)}</b></div>
+      <div><span>Per pallet</span><b>${nf0.format(r.unitsOnFull)} pcs</b></div>
+      <div><span>Stack height</span><b>${fmtDim(r.stackHeight)} ${unitL}</b></div>
+      <div><span>Each</span><b>${fmtKg(s.rWeight)} ${unitW}</b></div>
+      <div><span>Pallet weight</span><b>${fmtKg(r.palletWeight)} ${unitW}</b></div>
+      ${partLoad}
+    </div>
+    <p class="pc-sign">Stacked by ______________&nbsp;&nbsp; Date __________</p>`;
+}
+
+/* Each print gets its own page size. The rule lives in a <style> tag so the
+ * card can be 4½ × 8 without touching the stylesheet. */
+function printAs(card) {
+  $('pageRule').textContent = card
+    ? '@page { size: 4.5in 8in; margin: 5mm; }'
+    : '@page { size: letter portrait; margin: 10mm; }';
+  document.body.className = card ? 'print-card' : '';
+  window.print();
 }
 
 /* ----------------------------- events ---------------------------- */
@@ -937,7 +943,14 @@ function init() {
   $('unitImp').addEventListener('click', () => setUnits('imperial'));
   $('unitMet').addEventListener('click', () => setUnits('metric'));
   $('reset').addEventListener('click', resetAll);
-  $('printBtn').addEventListener('click', () => window.print());
+  $('printBtn').addEventListener('click', () => printAs(false));
+  $('cardBtn').addEventListener('click', () => printAs(true));
+  if (window.addEventListener) {
+    window.addEventListener('afterprint', () => {
+      document.body.className = '';
+      $('pageRule').textContent = '';
+    });
+  }
   $('useCallout').addEventListener('change', () => {
     if ($('useCallout').checked) prefillDims();
     render();
