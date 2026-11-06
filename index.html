@@ -72,12 +72,20 @@
             <p class="hint" id="estWeight">—</p>
             <button id="useEstimate" class="ghost" type="button">Use estimate</button>
           </div>
-          <label class="field span2">
+          <label class="field">
             <span class="label">Quantity <em>pcs</em></span>
             <input id="rQty" type="number" min="0" step="1" placeholder="—">
-            <span class="hint">From the box label — anywhere from 5 to 1,000+ pieces. The box is scrapped, so only the parts ship.</span>
           </label>
-          <p class="hint span2">Parts are stacked flat in straight rows, so every row holds the same count and the rows are easy to count off.</p>
+          <span class="field"></span>
+          <label class="field">
+            <span class="label">Parts per layer <em>optional</em></span>
+            <input id="rPerLayer" type="number" min="0" step="1" placeholder="off the size">
+          </label>
+          <label class="field">
+            <span class="label">Parts per row <em>optional</em></span>
+            <input id="rPerRow" type="number" min="0" step="1" placeholder="off the size">
+          </label>
+          <p class="hint span2">Quantity from the box label — anywhere from 5 to 1,000+ pieces; the box is scrapped, so only the parts ship. Parts are stacked flat in straight rows, so every row holds the same count and rows are easy to count off. Leave parts per layer blank and it is counted off the size; type the number that really goes on and the layers, height and weight follow your count. Parts slid under each other with the spouts alternating pack tighter than the size allows, so type what the floor does; add parts per row and the card names the rows again.</p>
         </div>
       </section>
 
