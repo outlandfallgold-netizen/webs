@@ -33,7 +33,7 @@ const LB_PER_KG = 2.2046226218;
 
 const LEN_FIELDS = ['rOD', 'rBore', 'rThick'];
 const WT_FIELDS = ['rWeight'];
-const COUNT_FIELDS = ['rQty'];
+const COUNT_FIELDS = ['rQty', 'rPerLayer', 'rPerRow'];
 const NUMERIC = [...LEN_FIELDS, ...WT_FIELDS, ...COUNT_FIELDS];
 
 /* Lettered dimensions as they read on the part print. Optional: they are
@@ -79,6 +79,11 @@ const nf1 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFr
 const $ = (id) => document.getElementById(id);
 
 let units = 'imperial';
+
+/* True while the weight on screen came from the size and the grade rather than
+ * from a part on a scale. The card says so: a guessed weight hides an
+ * overweight pallet. */
+let weightIsEstimate = false;
 
 /* ----------------------------- units ----------------------------- */
 
@@ -243,7 +248,19 @@ function calcPlan(s) {
   const od = s.rOD;
   const bore = s.partShape === 'ring' ? Math.min(s.rBore, od) : 0;
   const layout = roundLayout(usableLength(s), s.palletW, od);
-  const perLayer = layout.count;
+
+  /* The stacker's own count wins over the size: a part that nests, or one
+   * whose ears are wider than the body, only holds together on the floor. */
+  const typedPerLayer = Math.max(0, Math.round(s.rPerLayer || 0));
+  const handCount = typedPerLayer > 0;
+  const gridPerLayer = layout.count;
+  const perLayer = handCount ? typedPerLayer : gridPerLayer;
+
+  /* Rows only make sense when the typed layer divides into the typed row. */
+  const typedPerRow = Math.max(0, Math.round(s.rPerRow || 0));
+  const typedRows = handCount && typedPerRow > 0 && typedPerLayer % typedPerRow === 0
+    ? typedPerLayer / typedPerRow
+    : 0;
 
   const usableHeight = Math.max(0, s.maxHeight - s.palletH);
   const layersByHeight = s.rThick > 0 ? Math.floor(usableHeight / s.rThick) : 0;
@@ -285,7 +302,7 @@ function calcPlan(s) {
   }
 
   return {
-    layout, perLayer, bore, layersByHeight, layersByWeight, layers, capacity,
+    layout, perLayer, gridPerLayer, handCount, typedPerRow, typedRows, bore, layersByHeight, layersByWeight, layers, capacity,
     qty, pallets, unitsOnFull, layersOnFull, perPallet,
     stackHeight: s.palletH + layersOnFull * s.rThick,
     palletWeight: unitsOnFull * s.rWeight + s.palletTare,
@@ -483,7 +500,7 @@ function planPreview(s, r) {
 
   const clipped = maxLayers < r.layers;
   const badge = `${plural(r.layers, 'layer')} · ${nf0.format(r.perLayer)} pcs/layer` +
-    `${clipped || dense ? ' · schematic' : ''}`;
+    `${r.handCount ? ' · as counted' : ''}${clipped || dense ? ' · schematic' : ''}`;
   return sceneToHtml(shapes, `Isometric preview of ${nf0.format(r.perLayer)} parts per layer on a pallet`, badge);
 }
 
@@ -593,6 +610,15 @@ function render() {
       `${lenUnit()} pallet.`,
       'bad'
     ));
+  } else if (r.handCount) {
+    out.push(note(
+      `Packing: <b>${nf0.format(r.perLayer)} pcs</b> per layer as you counted them` +
+      (r.typedRows ? ` (${nf0.format(r.typedPerRow)} per row × ${nf0.format(r.typedRows)} rows)` : '') + `, on the ` +
+      `${fmtDim(s.palletL)} × ${fmtDim(s.palletW)} ${lenUnit()} pallet — ${overhangNote(s)}.` +
+      (r.perLayer > r.gridPerLayer
+        ? ` The size on its own fits <b>${nf0.format(r.gridPerLayer)}</b> in straight rows.`
+        : '')
+    ));
   } else {
     out.push(note(
       `Packing: <b>${layout.cols} × ${layout.rows} grid</b> → <b>${nf0.format(r.perLayer)} pcs</b> per layer ` +
@@ -649,7 +675,11 @@ function render() {
   if (r.pallets > 1) {
     out.push(note(
       `Last pallet: <b>${nf0.format(r.lastUnits)} pcs</b> · ${plural(r.lastLayers, 'layer')} · ` +
-      `${fmtKg(r.lastWeight)} ${wtUnit()}.`
+      `${fmtKg(r.lastWeight)} ${wtUnit()}` +
+      (r.lastUnits < r.unitsOnFull
+        ? ` — pull from it first, and the ${plural(r.pallets - 1, 'full pallet')} at ` +
+          `${nf0.format(r.unitsOnFull)} pcs stay in the bin.`
+        : ' — every pallet is full.')
     ));
   }
 
@@ -801,6 +831,7 @@ function renderSheet(s, r) {
         <tbody>${rows}</tbody>
       </table>
       ${more}
+      ${r.lastUnits < r.unitsOnFull ? `<p class="sheet-note"><b>Use pallet ${nf0.format(r.pallets)} first</b> — it is short at ${nf0.format(r.lastUnits)} pcs, so the ${nf0.format(r.pallets - 1)} full pallets stay in the bin.</p>` : ''}
     </section>` : ''}
 
     <section class="sheet-sec">
@@ -808,7 +839,7 @@ function renderSheet(s, r) {
       <p class="sheet-note">${stripTags($('notes').innerHTML)}</p>
     </section>
 
-    <div class="sheet-fig">${planPreview(s, r)}</div>
+    ${r.handCount ? '' : `<div class="sheet-fig">${planPreview(s, r)}</div>`}
 
     <p class="sheet-sign"><span>Stacked and checked by</span><span>Date</span></p>`;
 
@@ -823,6 +854,7 @@ function cardMarkup(s, r) {
   const unitW = wtUnit();
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const last = r.perPallet[r.perPallet.length - 1];
+  const estTag = weightIsEstimate ? ' (est.)' : '';
   const partLoad = last && last.units < r.unitsOnFull
     ? `<div><span>Last pallet</span><b>${nf0.format(last.units)} pcs · ${nf0.format(last.layers)} layers</b></div>`
     : '';
@@ -833,16 +865,23 @@ function cardMarkup(s, r) {
     <p class="pc-line">${fmtDim(s.rOD)} ${unitL} OD${r.bore > 0 ? ` × ${fmtDim(r.bore)} ${unitL} bore` : ''} × ${fmtDim(s.rThick)} ${unitL}</p>
     <p class="pc-line pc-grade">${s.partShape === 'ring' ? 'Ring / flange' : 'Disc / blank'} · ${nf0.format(r.qty)} pcs</p>
     <div class="pc-grid">
-      <div><span>Rows per layer</span><b>${nf0.format(r.layout.rows)}</b></div>
-      <div><span>Parts per row</span><b>${nf0.format(r.layout.cols)}</b></div>
+      ${r.handCount
+        ? (r.typedRows
+          ? `<div><span>Rows per layer</span><b>${nf0.format(r.typedRows)}</b></div>
+      <div><span>Parts per row</span><b>${nf0.format(r.typedPerRow)}</b></div>`
+          : '')
+        : `<div><span>Rows per layer</span><b>${nf0.format(r.layout.rows)}</b></div>
+      <div><span>Parts per row</span><b>${nf0.format(r.layout.cols)}</b></div>`}
       <div><span>Parts per layer</span><b>${nf0.format(r.perLayer)}</b></div>
       <div><span>Layers per pallet</span><b>${nf0.format(r.layersOnFull)}</b></div>
       <div><span>Per pallet</span><b>${nf0.format(r.unitsOnFull)} pcs</b></div>
       <div><span>Stack height</span><b>${fmtDim(r.stackHeight)} ${unitL}</b></div>
-      <div><span>Each</span><b>${fmtKg(s.rWeight)} ${unitW}</b></div>
-      <div><span>Pallet weight</span><b>${fmtKg(r.palletWeight)} ${unitW}</b></div>
+      <div><span>Each${estTag}</span><b>${fmtKg(s.rWeight)} ${unitW}</b></div>
+      <div><span>Pallet weight${estTag}</span><b>${fmtKg(r.palletWeight)} ${unitW}</b></div>
       ${partLoad}
     </div>
+    ${last && last.units < r.unitsOnFull ? '<p class="pc-open">Short pallet first — keep the full ones in the bin.</p>' : ''}
+    ${weightIsEstimate ? '<p class="pc-est">Weight worked out from the size — weigh one part and write it here.</p>' : ''}
     <p class="pc-sign">Stacked by ______________&nbsp;&nbsp; Date __________</p>`;
 }
 
@@ -850,7 +889,10 @@ function cardMarkup(s, r) {
  * card can be 4½ × 8 without touching the stylesheet. */
 function printAs(card) {
   $('pageRule').textContent = card
-    ? '@page { size: 4.5in 8in; margin: 5mm; }'
+    /* the stock card is punched about half an inch in from an edge, halfway
+     * down, so the block is centred with an inch either side: a hole top,
+     * bottom or either edge still misses it */
+    ? '@page { size: 4.5in 8in; margin: 6mm 25mm; }'
     : '@page { size: letter portrait; margin: 10mm; }';
   document.body.className = card ? 'print-card' : '';
   window.print();
@@ -889,6 +931,7 @@ function resetAll() {
   for (const id of NUMERIC) $(id).value = '';
   for (const id of DIM_FIELDS) $(id).value = '';
   $('useCallout').checked = false;
+  weightIsEstimate = false;
   render();
 }
 
@@ -936,6 +979,7 @@ function init() {
 
   document.addEventListener('input', (e) => {
     if (!e.target.matches('input, select')) return;
+    if (e.target.id === 'rWeight') weightIsEstimate = false;
     if (/^dim[A-Z]T$/.test(e.target.id)) syncCardToPart();
     render();
   });
@@ -959,6 +1003,7 @@ function init() {
     const kg = estimateWeightKg(readState());
     if (!kg) return;
     $('rWeight').value = Math.round(toDisplayWt(kg) * 100) / 100;
+    weightIsEstimate = true;
     render();
   });
 }
