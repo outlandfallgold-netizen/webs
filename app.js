@@ -155,22 +155,32 @@ function cardGeom(s) {
   const ring = s.partShape === 'ring';
   const outer = d.O || s.rOD || 0;
   const height = d.Y || s.rThick || 0;
-  const top = d.A || d.X || outer;
 
   let bore = ring ? (d.B || d.J || s.rBore || 0) : 0;
   if (ring && !bore && d.O && d.C && d.O > 2 * d.C) bore = d.O - 2 * d.C;
   bore = Math.min(bore, outer);
+
+  /* A and X are the width across the top of the cone. A number no wider than
+   * the bore cannot be a diameter at all — one card's X reads a spout length
+   * there — and a cone narrowing inside its own bore would count a fraction of
+   * the part: one A105 card read 2.9 lb against 7.445 lb on the scale. So a
+   * letter that does not describe a real annulus is left out of the volume and
+   * the part counts as a straight ring, which is the heavy side, never the
+   * light one. */
+  const cardTop = d.A || d.X || 0;
+  const tapers = cardTop > bore;
+  const top = tapers ? cardTop : outer;
+  const ignoredTop = cardTop > 0 && !tapers ? (d.A ? 'A' : 'X') : null;
 
   const used = [];
   if (d.O) used.push('O');
   if (d.Y) used.push('Y');
   if (ring && (d.B || d.J)) used.push(d.B ? 'B' : 'J');
   else if (ring && bore > 0 && d.C && d.O) used.push('C');
-  if (d.A) used.push('A');
-  else if (d.X) used.push('X');
+  if (tapers) used.push(d.A ? 'A' : 'X');
   if (d.R && d.F) used.push('R, f');
 
-  return { outer, height, top, bore, faceW: d.R || 0, faceH: d.F || 0, used };
+  return { outer, height, top, bore, cardTop, tapers, ignoredTop, faceW: d.R || 0, faceH: d.F || 0, used };
 }
 
 /* Volume of the turned part, in cm³: O at the bottom tapering to A (or X) at
@@ -628,6 +638,16 @@ function render() {
 
   if (s.partShape === 'ring' && s.rBore >= s.rOD) {
     out.push(note('Bore is not smaller than the outside diameter — treated as a solid disc.', 'warn'));
+  }
+
+  const cardG = cardGeom(s);
+  if (cardG.ignoredTop) {
+    out.push(note(
+      `The card's <b>${cardG.ignoredTop}</b> of <b>${fmtDim(cardG.cardTop)} ${lenUnit()}</b> is no wider than the ` +
+      `<b>${fmtDim(cardG.bore)} ${lenUnit()}</b> bore, so it does not describe the outside of the part. ` +
+      `It still prints; the weight is worked out as a straight ring at Ø <b>${fmtDim(cardG.outer)} ${lenUnit()}</b>.`,
+      'warn'
+    ));
   }
 
   if (r.perLayer > 0) {
