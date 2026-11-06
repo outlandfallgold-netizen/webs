@@ -90,7 +90,10 @@ gutters away, and the browser header/footer costs about an inch of the card.
 - **Weight estimate**: the part treated as an annular frustum — outside diameter tapering
   to the top-of-cone diameter, bore taken out through it, bottom raised face set back —
   times the grade's density (7.85 g/cm³ for carbon and alloy steel, 7.93 for 304, 8.00
-  for 316, 8.69 for C22).
+  for 316, 8.69 for C22). A cone top no wider than the bore cannot be a diameter — on one
+  A105 card `X` reads a spout length — so that letter still prints but is left out of the
+  volume, and the part counts as a straight ring: heavy, never light. That card's real
+  7.445 lb part comes out at 8.7 lb, where reading `X` as a diameter had it at 2.9 lb.
 - **One full part thickness per layer** is assumed. Parts that sit shorter than that
   because they nest are not modelled; the typed layer count is.
 
