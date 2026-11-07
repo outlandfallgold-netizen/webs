@@ -42,6 +42,21 @@
       </section>
 
       <section class="card">
+        <h2>Order</h2>
+        <div class="grid2">
+          <label class="field">
+            <span class="label">Purchase order</span>
+            <input id="rPO" type="text" maxlength="30" placeholder="—">
+          </label>
+          <label class="field">
+            <span class="label">Heat number</span>
+            <input id="rHeat" type="text" maxlength="30" placeholder="—">
+          </label>
+          <p class="hint span2">The same part and heat can ship on a different order, so both print on the plan sheet and on the card.</p>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>Part</h2>
         <div class="grid2">
           <label class="field span2">
@@ -143,7 +158,7 @@
       <div class="notes" id="notes"></div>
       <div class="printbar">
         <button id="printBtn" class="ghost" type="button">Print plan sheet</button>
-        <button id="cardBtn" class="ghost" type="button">Print 4½ × 8 card</button>
+        <button id="cardBtn" class="ghost" type="button">Print stack card</button>
         <span class="hint">Per-pallet counts, weights, stack heights and the print dimensions, on paper. The card is the short version for the stack itself.</span>
       </div>
     </div>
