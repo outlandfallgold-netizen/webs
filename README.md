@@ -30,6 +30,7 @@ Open `index.html` — no build step, no server, no dependencies. It is published
 | Quantity | The whole job's piece count, not per pallet. |
 | Parts per layer, parts per row | Optional. Type what really goes on and the layers, height, weight and pallet count follow your count instead of the size. Use it when parts nest or slide under one another, which packs tighter than a grid ever can. |
 | Lettered dimension card | Optional. O, C, R, X, Y, A, J, f and B as the part print reads; only the letters you fill in are used, and O/Y/B or C fill the part size in. |
+| Purchase order, heat number | Paperwork, not measurements. Both print on the plan sheet and on the card, because the same part and heat can ship on a different order. |
 
 The estimate from size and density is marked `(est.)` wherever it prints, because a
 guessed weight can hide an overweight pallet — on one recorded job the guessed weight
@@ -57,23 +58,26 @@ Two print buttons, two different pieces of paper.
 the per-pallet figures, the part, the pallet limits, the pallet breakdown, the packing
 notes, a small isometric drawing of the layer and a sign-off line.
 
-**4½ × 8 stack card** — the stock card. This is the short version for the person actually
-stacking: pallets needed, the part size in, rows per layer, parts per row, parts per
-layer, layers per pallet, per pallet, stack height, weight each, pallet weight, and the
-short pallet if there is one. No dimension letters, no drawing, no notes.
+**8.497 × 4.26 in stack card** — the stock card. This is the short version for the person
+actually stacking: pallets needed, the part size in, the purchase order and heat number,
+rows per layer, parts per row, parts per layer, layers per pallet, per pallet, stack
+height, weight each, pallet weight, and the short pallet if there is one. No dimension
+letters, no drawing, no notes.
 
 ### Card margins and the eye hole
 
 The stock card is punched with an eye hole about **½ in across, roughly ½ in in from an
-edge and halfway down the card**. To keep printing out of it, the card prints with:
+edge and halfway down the card**, and goes in with the hole on the left side. The card
+itself measures **8.497 × 4.26 in**, so it prints with:
 
-- **4½ × 8 in** page, **6 mm** at the top and bottom, and **1 in (25 mm) either side**;
-- the block **centred**, so a hole punched at the left edge or the right edge misses it,
-  and the printing stops an inch short of both paper edges — which also cures the numbers
-  being shaved off at the right edge on an earlier version that used 5 mm margins.
+- a **4.26 × 8.497 in** page, **6 mm** at the top and bottom, **0.2 in** at the left and
+  **0.690 in** at the right — a **3.37 in** column of type;
+- gutters taken from the operator's own measurement: 0.200 in of blank card left of the
+  type and 0.690 in right of it, so the block sits off-centre on purpose and the punched
+  hole on the left never lands on a row.
 
-The card measures about 7½ in of content on 8 in of stock, so there is spare card at the
-foot if the type ever needs to grow.
+The 3.37 in column is what let the card type be enlarged over the old 4½ × 8 sheet; the
+block still finishes with spare card at the foot.
 
 ### Print dialog settings
 
