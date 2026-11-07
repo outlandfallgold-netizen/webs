@@ -36,6 +36,10 @@ const WT_FIELDS = ['rWeight'];
 const COUNT_FIELDS = ['rQty', 'rPerLayer', 'rPerRow'];
 const NUMERIC = [...LEN_FIELDS, ...WT_FIELDS, ...COUNT_FIELDS];
 
+/* Paperwork, not measurements: the same part and heat can ship on more than one
+ * purchase order, so the order number goes on the sheet and the card too. */
+const TEXT_FIELDS = ['rPO', 'rHeat'];
+
 /* Lettered dimensions as they read on the part print. Optional: they are
  * recorded and printed alongside the plan, and never change the packing
  * maths — the plan still stacks on diameter, thickness and piece weight. */
@@ -131,6 +135,8 @@ function readState() {
     s[key] = Number.isFinite(v) && v > 0 ? v : 0;
   }
   s.useCallout = $('useCallout').checked;
+  s.po = ($('rPO').value || '').trim();
+  s.heat = ($('rHeat').value || '').trim();
   s.dims = {};
   for (const { key } of DIM_LETTERS) {
     const v = parseFloat($(`dim${key}T`).value);
@@ -718,6 +724,15 @@ function render() {
 /* --------------------------- print sheet -------------------------- */
 
 /** Notes are built as HTML; the sheet prints them as plain sentences. */
+/** Typed text (a PO, a heat number) prints as text, never as markup. */
+function esc(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function stripTags(html) {
   return html
     .replace(/<[^>]+>/g, ' ')
@@ -816,6 +831,8 @@ function renderSheet(s, r) {
               <th>Weight each</th><td>${fmtKg(s.rWeight)} ${unitW}</td></tr>
           <tr><th>Quantity</th><td>${nf0.format(r.qty)} pcs</td>
               <th>Parts load</th><td>${fmtKg0(r.totalLoad)} ${unitW}</td></tr>
+          <tr><th>Purchase order</th><td>${s.po ? esc(s.po) : '—'}</td>
+              <th>Heat number</th><td>${s.heat ? esc(s.heat) : '—'}</td></tr>
         </tbody>
       </table>
       ${est > 0.01 ? `<p class="sheet-note">Weight off the size and ${mat.id}: about ${fmtKg(est)} ${unitW} each${estimateCardNote(s)} — check it against the box label.</p>` : ''}
@@ -866,7 +883,7 @@ function renderSheet(s, r) {
   $('printCard').innerHTML = cardMarkup(s, r);
 }
 
-/* The 4½ × 8 card: what to build, how many, and the weight. No packing notes,
+/* The stack card: what to build, how many, and the weight. No packing notes,
  * no figure, no breakdown — just the numbers someone needs at the stack. */
 function cardMarkup(s, r) {
   const mat = materialOf(s.material);
@@ -876,7 +893,7 @@ function cardMarkup(s, r) {
   const last = r.perPallet[r.perPallet.length - 1];
   const estTag = weightIsEstimate ? ' (est.)' : '';
   const partLoad = last && last.units < r.unitsOnFull
-    ? `<div><span>Last pallet</span><b>${nf0.format(last.units)} pcs · ${nf0.format(last.layers)} layers</b></div>`
+    ? `<div class="pc-last-row"><span>Last pallet</span><b>${nf0.format(last.units)} pcs · ${nf0.format(last.layers)} layers</b></div>`
     : '';
 
   return `
@@ -884,6 +901,10 @@ function cardMarkup(s, r) {
     <div class="pc-hero"><b>${nf0.format(r.pallets)}</b><span>pallets · ${mat.id}</span></div>
     <p class="pc-line">${fmtDim(s.rOD)} ${unitL} OD${r.bore > 0 ? ` × ${fmtDim(r.bore)} ${unitL} bore` : ''} × ${fmtDim(s.rThick)} ${unitL}</p>
     <p class="pc-line pc-grade">${s.partShape === 'ring' ? 'Ring / flange' : 'Disc / blank'} · ${nf0.format(r.qty)} pcs</p>
+    <div class="pc-order">
+      <span><em>PO</em><b>${s.po ? esc(s.po) : '—'}</b></span>
+      <span><em>Heat</em><b>${s.heat ? esc(s.heat) : '—'}</b></span>
+    </div>
     <div class="pc-grid">
       ${r.handCount
         ? (r.typedRows
@@ -906,13 +927,14 @@ function cardMarkup(s, r) {
 }
 
 /* Each print gets its own page size. The rule lives in a <style> tag so the
- * card can be 4½ × 8 without touching the stylesheet. */
+ * card can be 8.497 × 4.26 in without touching the stylesheet. */
 function printAs(card) {
   $('pageRule').textContent = card
-    /* the stock card is punched about half an inch in from an edge, halfway
-     * down, so the block is centred with an inch either side: a hole top,
-     * bottom or either edge still misses it */
-    ? '@page { size: 4.5in 8in; margin: 6mm 25mm; }'
+    /* The stock card measures 8.497 × 4.26 in and goes in with the eye hole on
+     * the left edge, ½ in in and halfway down. The operator measured 0.200 in
+     * of clear card left of the type and 0.690 in right of it, so the type sits
+     * off-centre on purpose: 3.37 in wide, clear of the punched hole. */
+    ? '@page { size: 4.26in 8.497in; margin: 6mm 0.69in 6mm 0.2in; }'
     : '@page { size: letter portrait; margin: 10mm; }';
   document.body.className = card ? 'print-card' : '';
   window.print();
@@ -949,6 +971,7 @@ function resetAll() {
   $('material').value = DEFAULTS.material;
   $('partShape').value = DEFAULTS.partShape;
   for (const id of NUMERIC) $(id).value = '';
+  for (const id of TEXT_FIELDS) $(id).value = '';
   for (const id of DIM_FIELDS) $(id).value = '';
   $('useCallout').checked = false;
   weightIsEstimate = false;
