@@ -666,7 +666,7 @@ input::-webkit-inner-spin-button { margin-left: 4px; }
 
 .sheet-sign span { flex: 1; border-top: 1px solid #000; padding-top: 4px; }
 
-/* ---------- the 4½ × 8 stack card (screen: hidden) ---------- */
+/* ---------- the stack card, 8.497 × 4.26 in (screen: hidden) ---------- */
 .printcard { display: none; }
 
 @media print {
@@ -706,7 +706,7 @@ input::-webkit-inner-spin-button { margin-left: 4px; }
     max-width: 100%;
     overflow-wrap: break-word;
     color: #000;
-    font-size: 12pt;
+    font-size: 14pt;
     line-height: 1.35;
   }
   .printcard .pc-top {
@@ -715,15 +715,31 @@ input::-webkit-inner-spin-button { margin-left: 4px; }
     gap: 4mm;
     border-bottom: 1.5pt solid #000;
     padding-bottom: 2mm;
-    font-size: 8pt;
+    font-size: 9.5pt;
     letter-spacing: 0.09em;
     text-transform: uppercase;
   }
   .printcard .pc-hero { display: flex; align-items: baseline; gap: 3mm; margin: 3mm 0 1.5mm; }
-  .printcard .pc-hero b { font-size: 40pt; line-height: 1; }
-  .printcard .pc-hero span { font-size: 11pt; letter-spacing: 0.05em; text-transform: uppercase; }
-  .printcard .pc-line { margin: 1.5mm 0; font-size: 11pt; font-weight: 600; }
+  .printcard .pc-hero b { font-size: 52pt; line-height: 1; }
+  .printcard .pc-hero span { font-size: 12.5pt; letter-spacing: 0.05em; text-transform: uppercase; }
+  .printcard .pc-line { margin: 1.5mm 0; font-size: 13.5pt; font-weight: 600; }
   .printcard .pc-grade, .printcard .pc-last { font-weight: 500; }
+  /* the order and the heat, side by side under the part: two identical stacks
+   * can be different jobs */
+  .printcard .pc-order {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1mm 4mm;
+    margin: 2mm 0 0;
+  }
+  .printcard .pc-order em {
+    display: block;
+    font-style: normal;
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .printcard .pc-order b { font-size: 14pt; }
   /* one fact per line, running down the card, so the stack reads top to bottom */
   .printcard .pc-grid {
     margin: 3mm 0;
@@ -736,13 +752,17 @@ input::-webkit-inner-spin-button { margin-left: 4px; }
     justify-content: space-between;
     align-items: baseline;
     gap: 3mm;
-    padding: 1mm 0;
+    padding: 1.3mm 0;
     border-bottom: 0.4pt solid #999;
   }
   .printcard .pc-grid div:last-child { border-bottom: 0; }
-  .printcard .pc-grid span { font-size: 9.5pt; letter-spacing: 0.03em; text-transform: uppercase; }
-  .printcard .pc-grid b { font-size: 14pt; text-align: right; }
-  .printcard .pc-open { margin: 2mm 0 0; font-size: 8.5pt; font-weight: 700; }
-  .printcard .pc-est { margin: 1.5mm 0 0; font-size: 7.5pt; line-height: 1.25; color: #333; }
-  .printcard .pc-sign { margin-top: 5mm; font-size: 8.5pt; }
+  .printcard .pc-grid span { font-size: 12pt; letter-spacing: 0.03em; text-transform: uppercase; }
+  .printcard .pc-grid b { font-size: 18pt; text-align: right; }
+  /* the short-pallet row carries a count and a layer count in one line, so it
+   * steps down and refuses to wrap rather than breaking across two lines */
+  .printcard .pc-grid .pc-last-row span,
+  .printcard .pc-grid .pc-last-row b { font-size: 12pt; white-space: nowrap; }
+  .printcard .pc-open { margin: 2mm 0 0; font-size: 10pt; font-weight: 700; }
+  .printcard .pc-est { margin: 1.5mm 0 0; font-size: 9pt; line-height: 1.25; color: #333; }
+  .printcard .pc-sign { margin-top: 5mm; font-size: 10.5pt; }
 }
