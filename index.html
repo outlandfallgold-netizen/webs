@@ -1,176 +1,154 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pallet Planner — Loose Part Stacking Calculator</title>
-<meta name="description" content="Shop floor pallet planner for loose rings, flanges and discs: pallets needed, layers per pallet, pieces per layer, pallet weight and stack height.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Pallet Planner</title>
 <link rel="stylesheet" href="styles.css">
-<!-- the page size for whichever sheet is being printed; app.js swaps it -->
-<style id="pageRule"></style>
 </head>
 <body>
-<div class="shell">
-  <header class="hero">
-    <h1>Pallet Planner</h1>
-    <p class="tagline">Shop floor part stacking calculator</p>
-  </header>
+<main class="app">
+  <aside class="panel">
+    <header class="head">
+      <h1>Pallet Planner</h1>
+      <p class="tag">Loose parts, straight rows, fixed pallet</p>
+    </header>
 
-  <main class="layout">
-    <div class="col inputs">
-      <div class="units">
-        <span class="units-label">Units</span>
-        <div class="unit-group" role="group" aria-label="Units">
-          <button id="unitImp" class="unit-btn is-active" type="button">in · lb</button>
-          <button id="unitMet" class="unit-btn" type="button">cm · kg</button>
-        </div>
-      </div>
+    <div class="units" role="group" aria-label="Units">
+      <button type="button" id="unitImp" class="is-active">in · lb</button>
+      <button type="button" id="unitMet">cm · kg</button>
+    </div>
 
-      <section class="card">
-        <h2>Material grade</h2>
-        <div class="grid2">
-          <label class="field span2">
-            <span class="label">Grade on the paperwork</span>
-            <select id="material"></select>
-            <span class="hint" id="materialHint">&nbsp;</span>
-          </label>
-        </div>
-      </section>
+    <p class="fixed" id="fixedLine"></p>
 
-      <section class="card">
-        <h2>Order</h2>
-        <div class="grid2">
-          <label class="field">
-            <span class="label">Purchase order</span>
-            <input id="rPO" type="text" maxlength="30" placeholder="—">
-          </label>
-          <label class="field">
-            <span class="label">Heat number</span>
-            <input id="rHeat" type="text" maxlength="30" placeholder="—">
-          </label>
-          <p class="hint span2">The same part and heat can ship on a different order, so both print on the plan sheet and on the card.</p>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Part</h2>
-        <div class="grid2">
-          <label class="field span2">
-            <span class="label">Part shape</span>
-            <select id="partShape">
-              <option value="ring">Ring / flange — has a bore</option>
-              <option value="disc">Solid — no bore (disc or cone)</option>
-            </select>
-          </label>
-          <label class="field">
-            <span class="label">Outside Ø <em data-unit="len">in</em></span>
-            <input id="rOD" type="number" min="0.1" step="0.25" placeholder="—">
-          </label>
-          <label class="field" id="boreField">
-            <span class="label">Bore Ø <em data-unit="len">in</em></span>
-            <input id="rBore" type="number" min="0" step="0.25" placeholder="—">
-          </label>
-          <label class="field">
-            <span class="label">Thickness / height <em data-unit="len">in</em></span>
-            <input id="rThick" type="number" min="0.05" step="0.25" placeholder="—">
-            <span class="hint">Parts stack on this one. A card's Y is the total height, so it lands here.</span>
-          </label>
-          <label class="field">
-            <span class="label">Weight <em data-unit="wt">lb</em> each</span>
-            <input id="rWeight" type="number" min="0" step="0.5" placeholder="—">
-          </label>
-          <div class="estrow span2">
-            <p class="hint" id="estWeight">—</p>
-            <button id="useEstimate" class="ghost" type="button">Use estimate</button>
-          </div>
-          <label class="field">
-            <span class="label">Quantity <em>pcs</em></span>
-            <input id="rQty" type="number" min="0" step="1" placeholder="—">
-          </label>
-          <span class="field"></span>
-          <label class="field">
-            <span class="label">Parts per layer <em>optional</em></span>
-            <input id="rPerLayer" type="number" min="0" step="1" placeholder="off the size">
-          </label>
-          <label class="field">
-            <span class="label">Parts per row <em>optional</em></span>
-            <input id="rPerRow" type="number" min="0" step="1" placeholder="off the size">
-          </label>
-          <p class="hint span2">Quantity from the box label — anywhere from 5 to 1,000+ pieces; the box is scrapped, so only the parts ship. Parts are stacked flat in straight rows, so every row holds the same count and rows are easy to count off. Leave parts per layer blank and it is counted off the size; type the number that really goes on and the layers, height and weight follow your count. Parts slid under each other with the spouts alternating pack tighter than the size allows, so type what the floor does; add parts per row and the card names the rows again.</p>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Drawing dimensions</h2>
-        <label class="check">
-          <input id="useCallout" type="checkbox">
-          <span>Part has the lettered dimension card</span>
+    <section class="card">
+      <h2>Part</h2>
+      <label>Grade
+        <select id="material"></select>
+      </label>
+      <p class="hint" id="materialHint"></p>
+      <label>Shape
+        <select id="partShape">
+          <option value="ring">Ring / flange (has a bore)</option>
+          <option value="disc">Disc / blank (solid)</option>
+          <option value="solid">Solid — no bore (disc or cone)</option>
+        </select>
+      </label>
+      <div class="grid">
+        <label>Outside Ø
+          <span class="field"><input id="rOD" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
         </label>
-        <p class="hint">Optional, and only the letters this part has. Filled in, the card drives the plan: O is the footprint, Y the stack height, B or J the bore, and O with Y plus A, X, R, f and C sharpen the weight. A forging is often checked solid though its print still gives the finished bore — mark the part solid and B and J stay on the print without coming out of the weight. C is the wall at the bottom, which is how a ring's bore is worked out; on a solid part C is only the flange thickness, so it prints without changing the weight. Cards differ, so a blank letter is simply not used.</p>
-        <div class="dimgrid" id="calloutFields" hidden>
-          <span class="dimhead">Dim</span>
-          <span class="dimhead">Target <em data-unit="len">in</em></span>
-          <span class="dimhead">What it is</span>
-          <span class="dimletter">O</span>
-          <input id="dimOT" type="number" step="0.001" placeholder="—" aria-label="O target">
-          <span class="dimrole">Overall width — sets the footprint</span>
-          <span class="dimletter">C</span>
-          <input id="dimCT" type="number" step="0.001" placeholder="—" aria-label="C target">
-          <span class="dimrole">Wall thickness at the bottom</span>
-          <span class="dimletter">R</span>
-          <input id="dimRT" type="number" step="0.001" placeholder="—" aria-label="R target">
-          <span class="dimrole">Raised-face width, bottom</span>
-          <span class="dimletter">X</span>
-          <input id="dimXT" type="number" step="0.001" placeholder="—" aria-label="X target">
-          <span class="dimrole">Spout, bottom</span>
-          <span class="dimletter">Y</span>
-          <input id="dimYT" type="number" step="0.001" placeholder="—" aria-label="Y target">
-          <span class="dimrole">Overall height — sets the stack</span>
-          <span class="dimletter">A</span>
-          <input id="dimAT" type="number" step="0.001" placeholder="—" aria-label="A target">
-          <span class="dimrole">Top of the cone</span>
-          <span class="dimletter">J</span>
-          <input id="dimJT" type="number" step="0.001" placeholder="—" aria-label="J target">
-          <span class="dimrole">Bore — unused when solid</span>
-          <span class="dimletter">f</span>
-          <input id="dimFT" type="number" step="0.001" placeholder="—" aria-label="f target">
-          <span class="dimrole">Raised-face height, bottom</span>
-          <span class="dimletter">B</span>
-          <input id="dimBT" type="number" step="0.001" placeholder="—" aria-label="B target">
-          <span class="dimrole">Bore — unused when solid</span>
-          <p class="hint dimnote">Only the letters you fill in print. Leave the whole block blank to print every letter as a dash for writing in. O, Y, B and C fill the part size in when you tick the box above.</p>
-        </div>
-      </section>
-
-      <p class="hint fixedline" id="fixedLine">—</p>
-
-      <button id="reset" class="ghost" type="button">Clear all inputs</button>
-    </div>
-
-    <div class="col results">
-      <div id="banner" class="banner idle">—</div>
-      <div class="preview" id="preview"></div>
-      <div class="tiles" id="tiles"></div>
-      <div class="notes" id="notes"></div>
-      <div class="printbar">
-        <button id="printBtn" class="ghost" type="button">Print plan sheet</button>
-        <button id="cardBtn" class="ghost" type="button">Print stack card</button>
-        <span class="hint">Per-pallet counts, weights, stack heights and the print dimensions, on paper. The card is the short version for the stack itself.</span>
+        <label id="boreField">Bore Ø
+          <span class="field"><input id="rBore" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+        </label>
+        <label>Thickness / height
+          <span class="field"><input id="rThick" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+        </label>
+        <label>Weight each
+          <span class="field"><input id="rWeight" type="number" inputmode="decimal" step="0.01" min="0" placeholder="—"><em data-unit="wt">lb</em></span>
+        </label>
+        <label>Quantity
+          <span class="field"><input id="rQty" type="number" inputmode="numeric" step="1" min="0" placeholder="—"><em>pcs</em></span>
+        </label>
       </div>
+      <button type="button" id="useEstimate" class="ghost">Estimate weight from size</button>
+      <p class="hint" id="estWeight"></p>
+    </section>
+
+    <section class="card">
+      <h2>Order card</h2>
+      <div class="grid two">
+        <label>Purchase order
+          <input id="rPO" type="text" placeholder="—" autocomplete="off">
+        </label>
+        <label>Heat number
+          <input id="rHeat" type="text" placeholder="—" autocomplete="off">
+        </label>
+      </div>
+      <p class="hint">Prints on the plan sheet and the pallet card.</p>
+    </section>
+
+    <section class="card">
+      <h2>Stacking</h2>
+      <p class="hint">Leave blank to let the size decide. A number typed here wins over the size.</p>
+      <div class="grid two">
+        <label>Pcs / layer
+          <input id="rPerLayer" type="number" inputmode="numeric" step="1" min="0" placeholder="auto">
+        </label>
+        <label>Pcs / row
+          <input id="rPerRow" type="number" inputmode="numeric" step="1" min="0" placeholder="auto">
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Part card</h2>
+      <label class="check">
+        <input id="useCallout" type="checkbox">
+        <span>Use the dimensions on the part card</span>
+      </label>
+      <p class="hint">
+        O is the width across and Y the overall height. B or J is the bore — unused when solid, but still
+        printed. C is the wall at the bottom, which is how a ring's bore is worked out; on a solid part C is
+        the flange thickness and R the hub base, so the two of them count the flange and the hub separately.
+        A and X are the width across the top, R and f the raised face.
+      </p>
+      <div id="calloutFields" class="grid three" hidden>
+        <label>O <span class="field"><input id="dimOT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Overall width</span>
+        </label>
+        <label>C <span class="field"><input id="dimCT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Wall at the bottom</span>
+        </label>
+        <label>R <span class="field"><input id="dimRT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Raised face on a ring; hub base when solid</span>
+        </label>
+        <label>X <span class="field"><input id="dimXT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Spout, bottom</span>
+        </label>
+        <label>Y <span class="field"><input id="dimYT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Overall height</span>
+        </label>
+        <label>A <span class="field"><input id="dimAT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Top of the cone</span>
+        </label>
+        <label>J <span class="field"><input id="dimJT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Bore — unused when solid</span>
+        </label>
+        <label>f <span class="field"><input id="dimFT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Raised-face height</span>
+        </label>
+        <label>B <span class="field"><input id="dimBT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="—"><em data-unit="len">in</em></span>
+          <span class="dimrole">Bore — unused when solid</span>
+        </label>
+      </div>
+      <p class="hint">
+        The letters filled in print on the sheet and the card. They never override the packing maths — the plan
+        still stacks on the outside diameter, thickness and piece weight.
+      </p>
+    </section>
+
+    <div class="actions">
+      <button type="button" id="printBtn" class="primary">Print plan sheet</button>
+      <button type="button" id="cardBtn">Pallet card</button>
+      <button type="button" id="reset" class="ghost">Clear</button>
     </div>
-  </main>
+  </aside>
 
-  <div class="sheet" id="sheet" aria-hidden="true"></div>
-  <div class="printcard" id="printCard" aria-hidden="true"></div>
+  <section class="stage" id="stage">
+    <div class="banner idle" id="banner">Waiting for part details</div>
+    <div class="preview" id="preview"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="notes" id="notes"></div>
+  </section>
+</main>
 
-  <footer class="foot">
-    Estimates only — check against your racking, pallet rating and load limits before you stack.
-  </footer>
-</div>
+<article class="sheet" id="sheet"></article>
+
+<article class="card-print" id="printCard"></article>
+
+<style id="pageRule"></style>
+
 <script src="app.js"></script>
 </body>
 </html>
