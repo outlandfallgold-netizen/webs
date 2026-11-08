@@ -474,7 +474,7 @@ function addCylinder(shapes, cx, cy, r, z0, z1, topFill, sideFill, boreR) {
     const bore = [];
     for (let k = 0; k < N; k++) {
       const a = (k / N) * Math.PI * 2;
-      bore.push(project(cx + Math.cos(a) * r, cy + Math.sin(a) * r, z1));
+      bore.push(project(cx + Math.cos(a) * boreR, cy + Math.sin(a) * boreR, z1));
     }
     shapes.push({ pts: bore, fill: '#242b32', stroke: 'rgba(0,0,0,0.55)' });
   }
