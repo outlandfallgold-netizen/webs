@@ -99,17 +99,18 @@ gutters away, and the browser header/footer costs about an inch of the card.
   A105 card `X` reads a spout length — so that letter still prints but is left out of the
   volume, and the part counts as a straight ring: heavy, never light. That card's real
   7.445 lb part comes out at 8.7 lb, where reading `X` as a diameter had it at 2.9 lb.
-  A solid part is a flange disc under a drafted hub: with C, R and a taper on the card the
-  flange is a full disc of O × C and the hub is a frustum from R at its base up to the top
-  over Y − C, and with no C or no R the part is one frustum, which reads a little lighter.
-  `243660F` (F316/316L, O 18.75, C 2.750, R 12.38, X 11.94, Y 6.560) comes out at about
-  347 lb, or 343 lb at the 2.650 measured across the rim. R is the hub base diameter, not
-  a raised-face width — the print's 3° draft runs 12.380 down to 11.940 over
-  2 × (6.560 − 2.750) = 3.62 in, which is 3.3°, and the tape across the forging's step
-  reads about 12.4 in. Taking the A 8.810 flat top as the outside instead would give
-  317 lb, which is why a solid part takes the wider of A and X. That sheet carries no bore
-  letter at all, but a print that does — `114802F` reads J 14.69 for the bore machined
-  later — is still left out of a solid part rather than quietly halving it.
+  A solid part is a flange disc under its own cone, with no bore to take out. The flange is
+  a full disc of O × C; the cone leaves the flange at R (X 11.940 sits just inside it,
+  where the cone itself starts) and runs up to A over Y − C, and A is where the angle turns
+  straight up to the top face. `243660F` (F316/316L, O 18.75, C 2.750, R 12.38, X 11.94,
+  A 8.810, Y 6.560) comes out at about 317 lb, or 312 lb at the 2.650 measured across the
+  rim — four to a layer, two layers thick, eight to a pallet. The shop read the forging
+  end-on to confirm that: A 8.810 is the top of the coned angle rather than a rim inside an
+  X of 11.940, and the part is solid all the way through. Counting the whole hub at the R
+  diameter instead gave 347 lb, and reading the part as one clean cone from O 18.750 to A
+  gave 356 lb. A solid part has no inner diameter, so a print that still gives a bore —
+  `114802F` reads J 14.69 for the bore machined later — keeps that letter for the record
+  rather than quietly halving the weight.
 - **One full part thickness per layer** is assumed. Parts that sit shorter than that
   because they nest are not modelled; the typed layer count is.
 
