@@ -185,33 +185,36 @@ function cardGeom(s) {
    * A is the face inside the bore, but on the solid cone 243660F A 8.810 is the
    * flat top inside an X of 11.94. A solid part has no inner diameter at all,
    * so it takes the wider of the two — the envelope, heavy rather than light. */
-  const cardTop = ring ? (d.A || d.X || 0) : Math.max(d.A || 0, d.X || 0);
-  const topLetter = d.A && cardTop === d.A ? 'A' : 'X';
-  const tapers = cardTop > bore;
-  const top = tapers ? cardTop : outer;
-  const ignoredTop = cardTop > 0 && !tapers ? topLetter : null;
+  /* A solid part has no inner diameter, so A and X are the two ends of its own
+   * cone rather than a bore and an outside: X is where the cone starts, just
+   * above the hub base R, and A is where the cone stops and the angle turns
+   * straight up to the top face. The shop checked exactly that on the solid
+   * cone 243660F — A 8.810 is the top of the coned angle, not a rim inside an
+   * X of 11.940 — and it is solid all the way through. So the part is a flange
+   * of O × C with a cone from R up to A over Y − C; without C, R or A it stays
+   * a plain disc or one clean cone from O. */
+  const solidBase = !ring ? (d.R || d.X || 0) : 0;
+  const solidTop = !ring ? (d.A || 0) : 0;
+  const solidSplit = !ring && d.C > 0 && d.C < height && solidTop > 0 && solidBase > solidTop;
 
-  /* A solid part is a flange disc under a drafted hub, not one clean cone: on
-   * the solid cone 243660F the flange runs O 18.750 to C 2.750 and its hub runs
-   * R 12.380 at the base to X 11.940 at the top over Y − C. R is that base
-   * diameter — the print's 3° draft confirms it, 12.380 down to 11.940 over
-   * 2 × (6.560 − 2.750) is 3.3°. With C, R and a taper the flange and the hub
-   * are counted separately; without them the part stays one frustum, a close
-   * and slightly lighter reading. */
-  const solidSplit = !ring && d.C > 0 && d.R > 0 && tapers && d.C < height && d.R > cardTop;
+  const cardTop = ring ? (d.A || d.X || 0) : solidTop;
+  const topLetter = d.A && cardTop === d.A ? 'A' : 'X';
+  const tapers = ring ? cardTop > bore : solidSplit;
+  const top = ring ? (tapers ? cardTop : outer) : (solidSplit ? solidTop : outer);
+  const ignoredTop = ring && cardTop > 0 && !tapers ? topLetter : null;
 
   const used = [];
   if (d.O) used.push('O');
   if (d.Y) used.push('Y');
   if (ring && (d.B || d.J)) used.push(d.B ? 'B' : 'J');
   else if (ring && bore > 0 && d.C && d.O) used.push('C');
-  if (tapers) used.push(topLetter);
+  if (ring && tapers) used.push(topLetter);
   if (ring && d.R && d.F) used.push('R, f');
-  if (solidSplit) used.push('C, R');
+  if (solidSplit) used.push(d.R ? 'C, R, A' : 'C, X, A');
 
   return {
     outer, height, top, bore, cardTop, tapers, ignoredTop, boreLetter, boreOnPrint,
-    ring, flangeH: d.C || 0, hubBase: solidSplit ? d.R : 0, solidSplit,
+    ring, flangeH: d.C || 0, hubBase: solidSplit ? solidBase : 0, solidSplit,
     faceW: d.R || 0, faceH: d.F || 0, used
   };
 }
@@ -471,7 +474,7 @@ function addCylinder(shapes, cx, cy, r, z0, z1, topFill, sideFill, boreR) {
     const bore = [];
     for (let k = 0; k < N; k++) {
       const a = (k / N) * Math.PI * 2;
-      bore.push(project(cx + Math.cos(a) * boreR, cy + Math.sin(a) * boreR, z1));
+      bore.push(project(cx + Math.cos(a) * r, cy + Math.sin(a) * r, z1));
     }
     shapes.push({ pts: bore, fill: '#242b32', stroke: 'rgba(0,0,0,0.55)' });
   }
