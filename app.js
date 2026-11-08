@@ -191,27 +191,46 @@ function cardGeom(s) {
   const top = tapers ? cardTop : outer;
   const ignoredTop = cardTop > 0 && !tapers ? topLetter : null;
 
+  /* A solid part is a flange disc under a drafted hub, not one clean cone: on
+   * the solid cone 243660F the flange runs O 18.750 to C 2.750 and its hub runs
+   * R 12.380 at the base to X 11.940 at the top over Y − C. R is that base
+   * diameter — the print's 3° draft confirms it, 12.380 down to 11.940 over
+   * 2 × (6.560 − 2.750) is 3.3°. With C, R and a taper the flange and the hub
+   * are counted separately; without them the part stays one frustum, a close
+   * and slightly lighter reading. */
+  const solidSplit = !ring && d.C > 0 && d.R > 0 && tapers && d.C < height && d.R > cardTop;
+
   const used = [];
   if (d.O) used.push('O');
   if (d.Y) used.push('Y');
   if (ring && (d.B || d.J)) used.push(d.B ? 'B' : 'J');
   else if (ring && bore > 0 && d.C && d.O) used.push('C');
   if (tapers) used.push(topLetter);
-  if (d.R && d.F) used.push('R, f');
+  if (ring && d.R && d.F) used.push('R, f');
+  if (solidSplit) used.push('C, R');
 
   return {
     outer, height, top, bore, cardTop, tapers, ignoredTop, boreLetter, boreOnPrint,
+    ring, flangeH: d.C || 0, hubBase: solidSplit ? d.R : 0, solidSplit,
     faceW: d.R || 0, faceH: d.F || 0, used
   };
 }
 
-/* Volume of the turned part, in cm³: O at the bottom tapering to A (or X) at
- * the top — a plain ring when the card gives no taper — with the bore taken
- * out through it and the bottom face set back where R and f describe a raised
- * face. */
+/* Volume of the turned part, in cm³: a solid part as a flange disc under a
+ * drafted hub, a ring as O tapering to A (or X) with the bore taken out through
+ * it and the bottom face set back where R and f describe a raised face. */
 function partVolumeCm3(s) {
   const g = cardGeom(s);
   if (!(g.outer > 0) || !(g.height > 0)) return 0;
+
+  if (g.solidSplit) {
+    const flange = (Math.PI / 4) * g.outer * g.outer * g.flangeH;
+    const hubH = g.height - g.flangeH;
+    const base = (Math.PI / 4) * g.hubBase * g.hubBase;
+    const topA = (Math.PI / 4) * g.top * g.top;
+    const hub = (hubH / 3) * (base + Math.sqrt(base * topA) + topA);
+    return Math.max(0, flange + hub);
+  }
 
   // a ring cone: the same annulus at the bottom and the top, tapering
   // between them, so a plain ring comes out as area × height exactly
@@ -220,7 +239,9 @@ function partVolumeCm3(s) {
   const a1 = areaAt(g.top);
   let vol = (g.height / 3) * (a0 + Math.sqrt(a0 * a1) + a1);
 
-  if (g.faceW > 0 && g.faceH > 0) {
+  /* A raised face is a ring cut out of the bottom of a ring; on a solid part R
+   * is the hub base, so there is no raised-face ring to take back. */
+  if (g.ring && g.faceW > 0 && g.faceH > 0) {
     const faceOuter = Math.min(g.outer, g.bore + 2 * g.faceW);
     vol -= (Math.PI / 4) * Math.max(0, g.outer * g.outer - faceOuter * faceOuter) * g.faceH;
   }
