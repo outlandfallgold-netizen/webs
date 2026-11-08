@@ -187,13 +187,15 @@ function cardGeom(s) {
    * so it takes the wider of the two — the envelope, heavy rather than light. */
   /* A solid part has no inner diameter, so A and X are the two ends of its own
    * cone rather than a bore and an outside: X is where the cone starts, just
-   * above the hub base R, and A is where the cone stops and the angle turns
+   * above the step R, and A is where the cone stops and the angle turns
    * straight up to the top face. The shop checked exactly that on the solid
    * cone 243660F — A 8.810 is the top of the coned angle, not a rim inside an
    * X of 11.940 — and it is solid all the way through. So the part is a flange
-   * of O × C with a cone from R up to A over Y − C; without C, R or A it stays
-   * a plain disc or one clean cone from O. */
-  const solidBase = !ring ? (d.R || d.X || 0) : 0;
+   * of O × C with a cone from X up to A over Y − C, and that is the reading
+   * that matches the scale: 313 lb counted against 313 lb weighed, where
+   * counting the cone from the R step instead read 317 lb. Without C, X or A
+   * the part stays a plain disc or one clean cone from O. */
+  const solidBase = !ring ? (d.X || d.R || 0) : 0;
   const solidTop = !ring ? (d.A || 0) : 0;
   const solidSplit = !ring && d.C > 0 && d.C < height && solidTop > 0 && solidBase > solidTop;
 
@@ -210,7 +212,7 @@ function cardGeom(s) {
   else if (ring && bore > 0 && d.C && d.O) used.push('C');
   if (ring && tapers) used.push(topLetter);
   if (ring && d.R && d.F) used.push('R, f');
-  if (solidSplit) used.push(d.R ? 'C, R, A' : 'C, X, A');
+  if (solidSplit) used.push(d.X ? 'C, X, A' : 'C, R, A');
 
   return {
     outer, height, top, bore, cardTop, tapers, ignoredTop, boreLetter, boreOnPrint,
