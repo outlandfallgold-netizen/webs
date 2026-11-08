@@ -105,6 +105,10 @@ gutters away, and the browser header/footer costs about an inch of the card.
   A 8.810 flat top as the outside gives 295 lb. That sheet carries no bore letter at all,
   but a print that does — `114802F` reads J 14.69 for the bore machined later — is still
   left out of a solid part rather than quietly halving it.
+  C is the wall at the bottom, and it is what gives a ring its bore (O less two walls).
+  On a solid part C is only the flange thickness — 2.650 in measured across the rim of the
+  `243660F` forging against 2.750 on the print — so it prints on the sheet and leaves the
+  356 lb where the frustum puts it.
 - **One full part thickness per layer** is assumed. Parts that sit shorter than that
   because they nest are not modelled; the typed layer count is.
 
