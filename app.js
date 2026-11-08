@@ -166,12 +166,11 @@ function cardGeom(s) {
   if (ring && !bore && d.O && d.C && d.O > 2 * d.C) bore = d.O - 2 * d.C;
   bore = Math.min(bore, outer);
 
-  /* A forging can be checked solid while its print still carries the finished
-   * bore: a 16" 300# weld-neck forging (114802F) is a solid cone and the sheet
-   * still reads J 14.69. Carving that bore out of a solid part halves its
-   * weight and doubles what goes on a pallet, so on a solid part the letter is
-   * printed for the record and never used in the weight, and the screen says
-   * so rather than dropping it quietly. */
+  /* Some prints carry the bore the finished part will have while the forging
+   * in the box is solid — the 114802F 16" 300# weld-neck sheet reads J 14.69.
+   * Carving that bore out of a solid part halves its weight and doubles what
+   * goes on a pallet, so on a solid part the letter is printed for the record
+   * and never used, and the screen says so rather than dropping it quietly. */
   const boreLetter = !ring && (d.B || d.J) ? (d.B ? 'B' : 'J') : null;
   const boreOnPrint = boreLetter ? d[boreLetter] : 0;
 
@@ -182,17 +181,22 @@ function cardGeom(s) {
    * letter that does not describe a real annulus is left out of the volume and
    * the part counts as a straight ring, which is the heavy side, never the
    * light one. */
-  const cardTop = d.A || d.X || 0;
+  /* Which of the two is the outside depends on the print. On a bored weld-neck
+   * A is the face inside the bore, but on the solid cone 243660F A 8.810 is the
+   * flat top inside an X of 11.94. A solid part has no inner diameter at all,
+   * so it takes the wider of the two — the envelope, heavy rather than light. */
+  const cardTop = ring ? (d.A || d.X || 0) : Math.max(d.A || 0, d.X || 0);
+  const topLetter = d.A && cardTop === d.A ? 'A' : 'X';
   const tapers = cardTop > bore;
   const top = tapers ? cardTop : outer;
-  const ignoredTop = cardTop > 0 && !tapers ? (d.A ? 'A' : 'X') : null;
+  const ignoredTop = cardTop > 0 && !tapers ? topLetter : null;
 
   const used = [];
   if (d.O) used.push('O');
   if (d.Y) used.push('Y');
   if (ring && (d.B || d.J)) used.push(d.B ? 'B' : 'J');
   else if (ring && bore > 0 && d.C && d.O) used.push('C');
-  if (tapers) used.push(d.A ? 'A' : 'X');
+  if (tapers) used.push(topLetter);
   if (d.R && d.F) used.push('R, f');
 
   return {

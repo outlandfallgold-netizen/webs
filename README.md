@@ -99,10 +99,12 @@ gutters away, and the browser header/footer costs about an inch of the card.
   A105 card `X` reads a spout length — so that letter still prints but is left out of the
   volume, and the part counts as a straight ring: heavy, never light. That card's real
   7.445 lb part comes out at 8.7 lb, where reading `X` as a diameter had it at 2.9 lb.
-  A solid part counts the whole frustum, bore and all — a 16 in 300# weld-neck forging
-  (`114802F`, a solid cone, O 25.75, A 16.31, Y 6.000) comes out at about 607 lb solid,
-  where carving out the J 14.69 bore the print asks for after machining gives 291 lb and
-  puts twice as many on the pallet.
+  A solid part counts the whole frustum, bore and all, and takes the wider of A and X as
+  its top because a solid part has no inner diameter: the `243660F` solid cone
+  (F316/316L, O 18.75, X 11.94, Y 6.560) comes out at about 356 lb, where reading the
+  A 8.810 flat top as the outside gives 295 lb. That sheet carries no bore letter at all,
+  but a print that does — `114802F` reads J 14.69 for the bore machined later — is still
+  left out of a solid part rather than quietly halving it.
 - **One full part thickness per layer** is assumed. Parts that sit shorter than that
   because they nest are not modelled; the typed layer count is.
 
