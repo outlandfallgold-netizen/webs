@@ -166,6 +166,15 @@ function cardGeom(s) {
   if (ring && !bore && d.O && d.C && d.O > 2 * d.C) bore = d.O - 2 * d.C;
   bore = Math.min(bore, outer);
 
+  /* A forging can be checked solid while its print still carries the finished
+   * bore: a 16" 300# weld-neck forging (114802F) is a solid cone and the sheet
+   * still reads J 14.69. Carving that bore out of a solid part halves its
+   * weight and doubles what goes on a pallet, so on a solid part the letter is
+   * printed for the record and never used in the weight, and the screen says
+   * so rather than dropping it quietly. */
+  const boreLetter = !ring && (d.B || d.J) ? (d.B ? 'B' : 'J') : null;
+  const boreOnPrint = boreLetter ? d[boreLetter] : 0;
+
   /* A and X are the width across the top of the cone. A number no wider than
    * the bore cannot be a diameter at all — one card's X reads a spout length
    * there — and a cone narrowing inside its own bore would count a fraction of
@@ -186,7 +195,10 @@ function cardGeom(s) {
   if (tapers) used.push(d.A ? 'A' : 'X');
   if (d.R && d.F) used.push('R, f');
 
-  return { outer, height, top, bore, cardTop, tapers, ignoredTop, faceW: d.R || 0, faceH: d.F || 0, used };
+  return {
+    outer, height, top, bore, cardTop, tapers, ignoredTop, boreLetter, boreOnPrint,
+    faceW: d.R || 0, faceH: d.F || 0, used
+  };
 }
 
 /* Volume of the turned part, in cm³: O at the bottom tapering to A (or X) at
@@ -220,7 +232,9 @@ function estimateWeightKg(s) {
 
 /** Which card letters the estimate actually came from. */
 function estimateCardNote(s) {
-  const used = cardGeom(s).used;
+  const g = cardGeom(s);
+  const used = g.used.slice();
+  if (s.partShape !== 'ring') used.push('solid');
   return used.length ? ` — from the card: ${used.join(', ')}` : '';
 }
 
@@ -608,7 +622,8 @@ function render() {
     ['📏', hasPallet ? fmtDim(r.stackHeight) : '—', lenUnit(), 'Est. stack ht']
   ]);
 
-  const shapeWord = s.partShape === 'ring' ? 'Ring' : 'Disc';
+  const cardG = cardGeom(s);
+  const shapeWord = s.partShape === 'ring' ? 'Ring' : cardG.tapers ? 'Solid cone' : 'Disc';
   const stackWord = s.useCallout && s.dims.Y ? 'tall' : 'thick';
   const out = [];
 
@@ -646,12 +661,20 @@ function render() {
     out.push(note('Bore is not smaller than the outside diameter — treated as a solid disc.', 'warn'));
   }
 
-  const cardG = cardGeom(s);
   if (cardG.ignoredTop) {
     out.push(note(
       `The card's <b>${cardG.ignoredTop}</b> of <b>${fmtDim(cardG.cardTop)} ${lenUnit()}</b> is no wider than the ` +
       `<b>${fmtDim(cardG.bore)} ${lenUnit()}</b> bore, so it does not describe the outside of the part. ` +
       `It still prints; the weight is worked out as a straight ring at Ø <b>${fmtDim(cardG.outer)} ${lenUnit()}</b>.`,
+      'warn'
+    ));
+  }
+
+  if (cardG.boreLetter) {
+    out.push(note(
+      `Solid part: the card's <b>${cardG.boreLetter}</b> of <b>${fmtDim(cardG.boreOnPrint)} ${lenUnit()}</b> ` +
+      `is the bore on the print, so no bore comes out of the weight — the part is planned solid. ` +
+      `If the forging arrives bored, set the shape to <b>Ring / flange</b> and the weight drops.`,
       'warn'
     ));
   }
@@ -779,7 +802,9 @@ function renderSheet(s, r) {
   const unitW = wtUnit();
   const est = estimateWeightKg(s);
   const specRows = printedDimRows(s);
-  const shapeName = s.partShape === 'ring' ? 'ring / flange' : 'disc / blank';
+  const shapeName = s.partShape === 'ring'
+    ? 'ring / flange'
+    : cardGeom(s).tapers ? 'solid cone, no bore' : 'disc / blank, solid';
 
   /* The sheet is one page: past 14 pallets the rest are summed in a line. */
   const shown = r.perPallet.slice(0, MAX_BREAKDOWN_ROWS);
@@ -892,6 +917,12 @@ function cardMarkup(s, r) {
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const last = r.perPallet[r.perPallet.length - 1];
   const estTag = weightIsEstimate ? ' (est.)' : '';
+  /* A solid part is a disc or a cone; a cone is named on the card and its top
+   * diameter printed, because that is what tells two similar forgings apart. */
+  const g = cardGeom(s);
+  const solid = s.partShape !== 'ring';
+  const shapeLabel = solid ? (g.tapers ? 'Solid cone, no bore' : 'Disc / blank, solid') : 'Ring / flange';
+  const topNote = solid && g.tapers && g.top > 0 ? ` → ${fmtDim(g.top)} ${unitL} top` : '';
   const partLoad = last && last.units < r.unitsOnFull
     ? `<div class="pc-last-row"><span>Last pallet</span><b>${nf0.format(last.units)} pcs · ${nf0.format(last.layers)} layers</b></div>`
     : '';
@@ -899,8 +930,8 @@ function cardMarkup(s, r) {
   return `
     <div class="pc-top"><span>Pallet card</span><span>${today}</span></div>
     <div class="pc-hero"><b>${nf0.format(r.pallets)}</b><span>pallets · ${mat.id}</span></div>
-    <p class="pc-line">${fmtDim(s.rOD)} ${unitL} OD${r.bore > 0 ? ` × ${fmtDim(r.bore)} ${unitL} bore` : ''} × ${fmtDim(s.rThick)} ${unitL}</p>
-    <p class="pc-line pc-grade">${s.partShape === 'ring' ? 'Ring / flange' : 'Disc / blank'} · ${nf0.format(r.qty)} pcs</p>
+    <p class="pc-line">${fmtDim(s.rOD)} ${unitL} OD${topNote}${r.bore > 0 ? ` × ${fmtDim(r.bore)} ${unitL} bore` : ''} × ${fmtDim(s.rThick)} ${unitL}</p>
+    <p class="pc-line pc-grade">${shapeLabel} · ${nf0.format(r.qty)} pcs</p>
     <div class="pc-order">
       <span><em>PO</em><b>${s.po ? esc(s.po) : '—'}</b></span>
       <span><em>Heat</em><b>${s.heat ? esc(s.heat) : '—'}</b></span>
