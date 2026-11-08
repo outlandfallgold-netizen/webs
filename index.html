@@ -63,7 +63,7 @@
             <span class="label">Part shape</span>
             <select id="partShape">
               <option value="ring">Ring / flange — has a bore</option>
-              <option value="disc">Disc / blank — solid</option>
+              <option value="disc">Solid — no bore (disc or cone)</option>
             </select>
           </label>
           <label class="field">
@@ -110,7 +110,7 @@
           <input id="useCallout" type="checkbox">
           <span>Part has the lettered dimension card</span>
         </label>
-        <p class="hint">Optional, and only the letters this part has. Filled in, the card drives the plan: O is the footprint, Y the stack height, B or J the bore, and O with Y plus A, X, R, f and C sharpen the weight. Cards differ, so a blank letter is simply not used.</p>
+        <p class="hint">Optional, and only the letters this part has. Filled in, the card drives the plan: O is the footprint, Y the stack height, B or J the bore, and O with Y plus A, X, R, f and C sharpen the weight. A forging is often checked solid though its print still gives the finished bore — mark the part solid and B and J stay on the print without coming out of the weight. Cards differ, so a blank letter is simply not used.</p>
         <div class="dimgrid" id="calloutFields" hidden>
           <span class="dimhead">Dim</span>
           <span class="dimhead">Target <em data-unit="len">in</em></span>
@@ -135,13 +135,13 @@
           <span class="dimrole">Top of the cone</span>
           <span class="dimletter">J</span>
           <input id="dimJT" type="number" step="0.001" placeholder="—" aria-label="J target">
-          <span class="dimrole">Bore</span>
+          <span class="dimrole">Bore — unused when solid</span>
           <span class="dimletter">f</span>
           <input id="dimFT" type="number" step="0.001" placeholder="—" aria-label="f target">
           <span class="dimrole">Raised-face height, bottom</span>
           <span class="dimletter">B</span>
           <input id="dimBT" type="number" step="0.001" placeholder="—" aria-label="B target">
-          <span class="dimrole">Bore</span>
+          <span class="dimrole">Bore — unused when solid</span>
           <p class="hint dimnote">Only the letters you fill in print. Leave the whole block blank to print every letter as a dash for writing in. O, Y, B and C fill the part size in when you tick the box above.</p>
         </div>
       </section>

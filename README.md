@@ -25,11 +25,12 @@ Open `index.html` — no build step, no server, no dependencies. It is published
 | Field | Notes |
 | --- | --- |
 | Grade | A105, A130, A185, A350 LF2, F304-304L, F316-316L, F22, C22, or other. Sets the density used for the weight estimate. |
+| Part shape | **Ring / flange** takes a bore; **Solid — no bore** is a disc or a cone, and the bore field disappears. |
 | Outside Ø, bore Ø, thickness / height | The part as it sits on the pallet: the diameter sets the footprint, the height sets how many layers fit. |
 | Weight each | The weighed weight from the label. This is the number the plan trusts. |
 | Quantity | The whole job's piece count, not per pallet. |
 | Parts per layer, parts per row | Optional. Type what really goes on and the layers, height, weight and pallet count follow your count instead of the size. Use it when parts nest or slide under one another, which packs tighter than a grid ever can. |
-| Lettered dimension card | Optional. O, C, R, X, Y, A, J, f and B as the part print reads; only the letters you fill in are used, and O/Y/B or C fill the part size in. |
+| Lettered dimension card | Optional. O, C, R, X, Y, A, J, f and B as the part print reads; only the letters you fill in are used, and O/Y/B or C fill the part size in. On a solid part B and J still print for the record, but no bore comes out of the weight. |
 | Purchase order, heat number | Paperwork, not measurements. Both print on the plan sheet and on the card, because the same part and heat can ship on a different order. |
 
 The estimate from size and density is marked `(est.)` wherever it prints, because a
@@ -98,6 +99,10 @@ gutters away, and the browser header/footer costs about an inch of the card.
   A105 card `X` reads a spout length — so that letter still prints but is left out of the
   volume, and the part counts as a straight ring: heavy, never light. That card's real
   7.445 lb part comes out at 8.7 lb, where reading `X` as a diameter had it at 2.9 lb.
+  A solid part counts the whole frustum, bore and all — a 16 in 300# weld-neck forging
+  (`114802F`, a solid cone, O 25.75, A 16.31, Y 6.000) comes out at about 607 lb solid,
+  where carving out the J 14.69 bore the print asks for after machining gives 291 lb and
+  puts twice as many on the pallet.
 - **One full part thickness per layer** is assumed. Parts that sit shorter than that
   because they nest are not modelled; the typed layer count is.
 
